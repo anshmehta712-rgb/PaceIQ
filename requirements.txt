@@ -1,0 +1,8 @@
+streamlit==1.67.0
+pandas==3.1.1
+numpy==2.5.4
+mediapipe==1.2.2
+opencv-python-headless==5.0.0.93
+ollama==0.6.3
+imageio-ffmpeg==0.8.1
+protobuf==7.36.2

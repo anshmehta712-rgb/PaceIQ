@@ -1,0 +1,29 @@
+# Virtual environment
+.venv/
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# API keys and private configuration
+.streamlit/secrets.toml
+.env
+.env.*
+
+# Local videos and analysis outputs
+*.mp4
+*.mov
+*.avi
+*.csv
+
+# Backups
+app_backup.py
+app_before_redesign.py
+*_backup.py
+
+# Mac files
+.DS_Store
+
+# Editor files
+.vscode/
