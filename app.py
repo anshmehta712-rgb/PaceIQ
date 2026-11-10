@@ -72,6 +72,20 @@ def mobile_page_changed():
     st.session_state["current_page"] = st.session_state["mobile_page_picker"]
 
 
+def slider_to_exact_frame(video_id):
+    """Synchronize the exact frame input after slider movement."""
+    st.session_state[f"phase_frame_number_{video_id}"] = (
+        st.session_state[f"phase_frame_{video_id}"] + 1
+    )
+
+
+def exact_frame_to_slider(video_id):
+    """Jump the video preview to the exact frame entered."""
+    st.session_state[f"phase_frame_{video_id}"] = (
+        st.session_state[f"phase_frame_number_{video_id}"] - 1
+    )
+
+
 @st.cache_data(show_spinner=False, max_entries=64)
 def preview_frame_cached(video_bytes, frame_index, fps):
     return get_preview_frame(
@@ -420,6 +434,10 @@ def motion_lab():
 
     st.video(video_bytes)
 
+    st.caption(
+        "On phones, swipe across the tabs to view the next section."
+    )
+
     phase_tab, tracking_tab, coaching_tab = st.tabs(
         [
             "01 / Bowling Phases",
@@ -447,13 +465,39 @@ def motion_lab():
             "and ball release.",
         )
 
+        # The slider is convenient on desktop; the exact-frame input
+        # below is easier to operate on small touchscreens.
+        slider_key = f"phase_frame_{video_id}"
+        number_key = f"phase_frame_number_{video_id}"
+
+        if slider_key not in st.session_state:
+            st.session_state[slider_key] = min(
+                int(37 * fps), frames - 1
+            )
+
+        if number_key not in st.session_state:
+            st.session_state[number_key] = (
+                st.session_state[slider_key] + 1
+            )
+
         frame_index = st.slider(
             "Select video frame",
             min_value=0,
             max_value=frames - 1,
-            value=min(int(37 * fps), frames - 1),
             step=1,
-            key=f"phase_frame_{video_id}",
+            key=slider_key,
+            on_change=slider_to_exact_frame,
+            args=(video_id,),
+        )
+
+        st.number_input(
+            "Jump to exact frame (useful on phones)",
+            min_value=1,
+            max_value=frames,
+            step=1,
+            key=number_key,
+            on_change=exact_frame_to_slider,
+            args=(video_id,),
         )
 
         try:
