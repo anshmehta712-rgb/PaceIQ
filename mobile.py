@@ -429,6 +429,92 @@ def apply_mobile_styles():
         transform: none !important;
     }
 }
+
+/*
+ * Responsive homepage grids are based on their actual container width.
+ * They do not depend on Safari's viewport or Streamlit column internals.
+ */
+.pace-feature-grid,
+.pace-process-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr)) !important;
+    gap: 18px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    margin: 12px 0 24px !important;
+    box-sizing: border-box !important;
+}
+
+.pace-feature-grid > .pace-tile {
+    box-sizing: border-box !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 210px !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+    padding: 24px !important;
+}
+
+.pace-feature-grid .pace-tile-title,
+.pace-feature-grid .pace-tile-body {
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+    white-space: normal !important;
+    max-width: 100% !important;
+}
+
+.pace-feature-grid .pace-tile-title {
+    font-size: clamp(21px, 2.3vw, 26px) !important;
+    margin: 20px 0 10px !important;
+    line-height: 1.18 !important;
+}
+
+.pace-feature-grid .pace-tile-body {
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+}
+
+.pace-process-step {
+    min-width: 0;
+    padding: 12px 4px 16px;
+}
+
+.pace-process-step h3 {
+    font-size: 20px;
+    line-height: 1.25;
+    margin: 0 0 8px;
+}
+
+.pace-process-step p {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #a8bbc2;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .pace-feature-grid,
+    .pace-process-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 12px !important;
+    }
+
+    .pace-feature-grid > .pace-tile {
+        min-height: 0 !important;
+        padding: 22px !important;
+    }
+
+    .pace-feature-grid .pace-tile-title {
+        font-size: 23px !important;
+        margin: 14px 0 8px !important;
+    }
+
+    .pace-process-step {
+        padding: 12px 4px !important;
+    }
+}
+
 </style>
         """,
         unsafe_allow_html=True,
