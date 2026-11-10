@@ -9,6 +9,7 @@ from tracker import process_video, video_information
 from feedback import analyse_movement
 from phase_tools import get_preview_frame, get_phase_measurements
 from ai_feedback import generate_ai_feedback
+from mobile import apply_mobile_styles
 
 from design import (
     apply_design,
@@ -35,6 +36,7 @@ st.set_page_config(
 )
 
 apply_design()
+apply_mobile_styles()
 
 PHASE_NAMES = {
     "BFC": "Back-Foot Contact",
@@ -63,6 +65,11 @@ def navigate(page):
 
 def switch_to_analysis():
     navigate("Motion Lab")
+
+
+def mobile_page_changed():
+    """Keep the mobile page picker in sync with app navigation."""
+    st.session_state["current_page"] = st.session_state["mobile_page_picker"]
 
 
 @st.cache_data(show_spinner=False, max_entries=64)
@@ -144,21 +151,40 @@ def phase_signature(saved_phases):
 
 brand()
 
-navigation = st.columns([1, 1, 1, 3], gap="small")
+# Synchronize the mobile selectbox BEFORE it is rendered. This also
+# handles navigation triggered by buttons elsewhere in the app.
+if (
+    st.session_state.get("mobile_page_picker")
+    != st.session_state["current_page"]
+):
+    st.session_state["mobile_page_picker"] = st.session_state["current_page"]
 
-for index, page in enumerate(PAGES):
-    with navigation[index]:
-        if st.button(
-            page,
-            key=f"nav_{index}",
-            type=(
-                "primary"
-                if st.session_state["current_page"] == page
-                else "secondary"
-            ),
-            width="stretch",
-        ):
-            navigate(page)
+# Desktop/tablet: three visible navigation buttons.
+with st.container(key="desktop_navigation"):
+    navigation = st.columns([1, 1, 1, 3], gap="small")
+
+    for index, page in enumerate(PAGES):
+        with navigation[index]:
+            if st.button(
+                page,
+                key=f"nav_{index}",
+                type=(
+                    "primary"
+                    if st.session_state["current_page"] == page
+                    else "secondary"
+                ),
+                width="stretch",
+            ):
+                navigate(page)
+
+# Phone: compact full-width navigation picker.
+with st.container(key="mobile_navigation"):
+    st.selectbox(
+        "Explore PaceIQ",
+        PAGES,
+        key="mobile_page_picker",
+        on_change=mobile_page_changed,
+    )
 
 st.divider()
 
