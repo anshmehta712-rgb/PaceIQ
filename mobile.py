@@ -515,6 +515,70 @@ def apply_mobile_styles():
     }
 }
 
+
+/* My Story chapter cards: auto-fit, never three squeezed phone columns. */
+.pace-story-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr)) !important;
+    gap: 18px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    margin: 16px 0 28px !important;
+}
+
+.pace-story-grid > .pace-story-card {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+    padding: 25px !important;
+}
+
+.pace-story-grid .pace-story-card h3,
+.pace-story-grid .pace-story-card p {
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+    white-space: normal !important;
+}
+
+.pace-story-grid .pace-story-card h3 {
+    font-size: 23px !important;
+    line-height: 1.22 !important;
+}
+
+.pace-story-grid .pace-story-card p {
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+}
+
+/* Scope the photo and opening story columns to a phone-friendly layout. */
+@media (max-width: 768px) {
+    .pace-story-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 12px !important;
+    }
+
+    .pace-story-grid > .pace-story-card {
+        padding: 21px !important;
+    }
+
+    .pace-story-grid .pace-story-card h3 {
+        font-size: 22px !important;
+    }
+
+    .pace-story-grid .pace-story-card p {
+        font-size: 14px !important;
+    }
+
+    .pace-story-quote {
+        overflow-wrap: normal !important;
+        word-break: normal !important;
+    }
+}
+
 </style>
         """,
         unsafe_allow_html=True,
