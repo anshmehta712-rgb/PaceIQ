@@ -579,6 +579,72 @@ def apply_mobile_styles():
     }
 }
 
+
+/* Story opening is an editorial sequence, not two squeezed columns. */
+.st-key-story_intro,
+.st-key-story_photo,
+.st-key-story_intro_continued {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+}
+
+.st-key-story_intro h2 {
+    font-size: clamp(2rem, 4.4vw, 3.6rem) !important;
+    line-height: 1.12 !important;
+    letter-spacing: -0.045em !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+    max-width: 850px;
+    margin-top: 12px !important;
+}
+
+.st-key-story_intro p,
+.st-key-story_intro_continued p {
+    max-width: 780px;
+    line-height: 1.75 !important;
+    font-size: 16px !important;
+}
+
+.st-key-story_photo {
+    max-width: 800px !important;
+    margin: 18px 0 23px !important;
+}
+
+.st-key-story_photo img {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    object-fit: contain !important;
+    border-radius: 18px !important;
+}
+
+@media (max-width: 768px) {
+    .st-key-story_intro h2 {
+        font-size: clamp(1.9rem, 8.1vw, 2.6rem) !important;
+        line-height: 1.13 !important;
+        max-width: 100% !important;
+    }
+
+    .st-key-story_intro p,
+    .st-key-story_intro_continued p {
+        max-width: 100% !important;
+        font-size: 15px !important;
+        line-height: 1.7 !important;
+    }
+
+    .st-key-story_photo {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 16px 0 19px !important;
+    }
+
+    .st-key-story_photo img {
+        border-radius: 14px !important;
+    }
+}
+
 </style>
         """,
         unsafe_allow_html=True,

@@ -1171,14 +1171,10 @@ def story():
         "me to build PaceIQ.",
     )
 
-    left, right = st.columns(
-        [1.05, 1],
-        gap="large",
-        vertical_alignment="center",
-    )
-
-    with left:
-
+    # Story introduction is intentionally a full-width editorial layout.
+    # Streamlit's side-by-side columns were squeezing both the copy
+    # and the photograph into narrow strips on mobile Safari.
+    with st.container(key="story_intro"):
         st.markdown(
             '<div class="pace-eyebrow">'
             'FROM THE CREASE TO THE CODE'
@@ -1199,6 +1195,27 @@ def story():
             "the ball leaves your hand."
         )
 
+    photo_path = (
+        Path(__file__).resolve().parent
+        / "story_photo.png"
+    )
+
+    with st.container(key="story_photo"):
+        if photo_path.is_file():
+            st.image(
+                str(photo_path),
+                width="stretch",
+            )
+            st.caption(
+                "A moment from my bowling journey."
+            )
+        else:
+            st.info(
+                "Save your bowling photo as story_photo.png "
+                "inside the PaceIQ folder."
+            )
+
+    with st.container(key="story_intro_continued"):
         st.write(
             "As I developed as a fast bowler, "
             "I wanted to understand more than "
@@ -1223,32 +1240,6 @@ def story():
             '</div>',
             unsafe_allow_html=True,
         )
-
-    with right:
-
-        photo_path = (
-            Path(__file__).resolve().parent
-            / "story_photo.png"
-        )
-
-        if photo_path.is_file():
-
-            st.image(
-                str(photo_path),
-                width="stretch",
-            )
-
-            st.caption(
-                "A moment from my own bowling journey. "
-                "Original photograph, without edits."
-            )
-
-        else:
-
-            st.info(
-                "Save your original bowling photo as "
-                "story_photo.png inside the PaceIQ folder."
-            )
 
     st.divider()
 
