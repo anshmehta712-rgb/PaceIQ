@@ -273,31 +273,39 @@ def home():
         "connected analysis tools.",
     )
 
-    feature_columns = st.columns(3, gap="medium")
-
-    with feature_columns[0]:
-        tile(
-            "01 / TRACK",
-            "Motion Tracking",
-            "Upload a bowling video and visualise "
-            "estimated body landmarks and joint movement.",
-        )
-
-    with feature_columns[1]:
-        tile(
-            "02 / MEASURE",
-            "Biomechanics Lab",
-            "Examine estimated knee, elbow and trunk "
-            "angles across important delivery phases.",
-        )
-
-    with feature_columns[2]:
-        tile(
-            "03 / UNDERSTAND",
-            "AI Bowling Coach",
-            "Receive structured observations and "
-            "suggested training questions using local AI.",
-        )
+    # Native HTML grid: auto-wraps based on actual available width.
+    # Unlike st.columns(3), cards cannot become narrow phone columns.
+    st.markdown(
+        """
+        <div class="pace-feature-grid">
+            <article class="pace-tile">
+                <div class="pace-tile-no">01 / TRACK</div>
+                <div class="pace-tile-title">Motion Tracking</div>
+                <div class="pace-tile-body">
+                    Upload a bowling video and visualise estimated
+                    body landmarks and joint movement.
+                </div>
+            </article>
+            <article class="pace-tile">
+                <div class="pace-tile-no">02 / MEASURE</div>
+                <div class="pace-tile-title">Biomechanics Lab</div>
+                <div class="pace-tile-body">
+                    Examine estimated knee, elbow and trunk angles
+                    across important delivery phases.
+                </div>
+            </article>
+            <article class="pace-tile">
+                <div class="pace-tile-no">03 / UNDERSTAND</div>
+                <div class="pace-tile-title">AI Bowling Coach</div>
+                <div class="pace-tile-body">
+                    Receive structured observations and suggested
+                    training questions using local AI.
+                </div>
+            </article>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     st.markdown(
         '<div class="pace-band">'
@@ -317,28 +325,28 @@ def home():
         "fast-bowling delivery.",
     )
 
-    process_columns = st.columns(3, gap="medium")
-
-    with process_columns[0]:
-        st.markdown("### 01 — Upload")
-        st.write(
-            "Record your bowling action and upload "
-            "the video into PaceIQ."
-        )
-
-    with process_columns[1]:
-        st.markdown("### 02 — Analyse")
-        st.write(
-            "Identify bowling phases and measure "
-            "estimated joint angles."
-        )
-
-    with process_columns[2]:
-        st.markdown("### 03 — Reflect")
-        st.write(
-            "Review the measurements and receive "
-            "AI-assisted coaching observations."
-        )
+    st.markdown(
+        """
+        <div class="pace-process-grid">
+            <div class="pace-process-step">
+                <h3>01 — Upload</h3>
+                <p>Record your bowling action and upload
+                the video into PaceIQ.</p>
+            </div>
+            <div class="pace-process-step">
+                <h3>02 — Analyse</h3>
+                <p>Identify bowling phases and measure
+                estimated joint angles.</p>
+            </div>
+            <div class="pace-process-step">
+                <h3>03 — Reflect</h3>
+                <p>Review the measurements and receive
+                AI-assisted coaching observations.</p>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     st.divider()
 
