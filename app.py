@@ -1325,41 +1325,33 @@ def story():
         "Three stages that shaped the project.",
     )
 
-    chapter_columns = st.columns(
-        3,
-        gap="medium",
+    # Responsive grid: story cards stay readable on phones.
+    st.markdown(
+        """
+        <div class="pace-story-grid">
+            <article class="pace-story-card">
+                <div class="num">CHAPTER 01</div>
+                <h3>The Frustration</h3>
+                <p>I wanted to improve my technique, but I did not
+                always have access to detailed coaching feedback.</p>
+            </article>
+            <article class="pace-story-card">
+                <div class="num">CHAPTER 02</div>
+                <h3>The Experiment</h3>
+                <p>I explored computer vision and pose estimation
+                to understand whether video could reveal useful
+                movement measurements.</p>
+            </article>
+            <article class="pace-story-card">
+                <div class="num">CHAPTER 03</div>
+                <h3>The Creation</h3>
+                <p>I developed PaceIQ to combine video tracking,
+                bowling-phase analysis and local AI coaching.</p>
+            </article>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-
-    with chapter_columns[0]:
-
-        story_card(
-            "01",
-            "The Frustration",
-            "I wanted to improve my technique, "
-            "but I did not always have access "
-            "to detailed coaching feedback.",
-        )
-
-    with chapter_columns[1]:
-
-        story_card(
-            "02",
-            "The Experiment",
-            "I explored computer vision and "
-            "pose estimation to understand "
-            "whether video could reveal useful "
-            "movement measurements.",
-        )
-
-    with chapter_columns[2]:
-
-        story_card(
-            "03",
-            "The Creation",
-            "I developed PaceIQ to combine "
-            "video tracking, bowling-phase "
-            "analysis and local AI coaching.",
-        )
 
     st.divider()
 
