@@ -1,7 +1,7 @@
-"""Responsive layout overrides for PaceIQ.
+"""PaceIQ mobile presentation rules.
 
-This module changes presentation only. It does not affect
-video processing, pose tracking or AI analysis.
+All rendering changes are CSS only; the tracking, video-processing,
+measurement and local AI routines remain unmodified.
 """
 
 import streamlit as st
@@ -11,7 +11,7 @@ def apply_mobile_styles():
     st.markdown(
         """
 <style>
-/* Desktop gets the original three-button navigation. */
+/* Responsive navigation: show only the appropriate control. */
 .st-key-mobile_navigation {
     display: none !important;
 }
@@ -20,34 +20,38 @@ def apply_mobile_styles():
     display: block !important;
 }
 
-/* Keep embedded media and layout columns within the viewport. */
-.stApp img,
+/* Media must never escape the content container. */
 .stApp video,
-.stApp canvas {
+.stApp canvas,
+.stApp img,
+.stApp svg {
     max-width: 100%;
 }
 
-[data-testid="stHorizontalBlock"] > div,
-[data-testid="stVerticalBlock"] {
-    min-width: 0;
+.stApp [data-testid="stDataFrame"],
+.stApp [data-testid="stVegaLiteChart"] {
+    max-width: 100%;
 }
 
+/* Protect against large text forcing horizontal page scrolling. */
 .pace-title,
 .pace-section-title,
 .pace-tile-title,
+.pace-banner h1,
 .pace-brand-name {
-    overflow-wrap: break-word;
+    overflow-wrap: anywhere;
 }
 
-/* Tablet spacing */
-@media (min-width: 701px) and (max-width: 950px) {
+/* Compact tablet experience without changing the desktop structure. */
+@media (min-width: 769px) and (max-width: 1040px) {
     .block-container {
-        padding-left: 1.4rem !important;
-        padding-right: 1.4rem !important;
+        max-width: 100% !important;
+        padding-left: 1.5rem !important;
+        padding-right: 1.5rem !important;
     }
 
     .pace-title {
-        font-size: clamp(2.8rem, 5.5vw, 4.8rem) !important;
+        font-size: clamp(2.5rem, 6vw, 4.7rem) !important;
     }
 
     .pace-viz {
@@ -55,12 +59,18 @@ def apply_mobile_styles():
     }
 
     .pace-viz img {
-        height: 335px !important;
+        height: 330px !important;
     }
 }
 
-/* Phones and narrower devices */
-@media (max-width: 700px) {
+/* PHONE: build a true single-column layout instead of squeezing columns. */
+@media (max-width: 768px) {
+    html,
+    body,
+    .stApp {
+        overflow-x: clip !important;
+    }
+
     .st-key-desktop_navigation {
         display: none !important;
     }
@@ -68,36 +78,68 @@ def apply_mobile_styles():
     .st-key-mobile_navigation {
         display: block !important;
         width: 100% !important;
-        margin: 0.15rem 0 0.75rem;
+        margin-bottom: 0.65rem;
     }
 
     .st-key-mobile_navigation [data-baseweb="select"] > div {
-        background: #112632 !important;
-        border: 1px solid rgba(138, 247, 178, 0.35) !important;
-        border-radius: 12px !important;
         min-height: 48px;
+        border-radius: 12px !important;
+        background: #122b34 !important;
+        border: 1px solid rgba(138, 247, 178, .42) !important;
     }
 
-    .block-container {
+    /* This is the main fix: force Streamlit's actual columns to stack. */
+    .stApp [data-testid="stHorizontalBlock"] {
+        display: flex !important;
+        flex-direction: column !important;
+        flex-wrap: nowrap !important;
+        align-items: stretch !important;
+        gap: 0.9rem !important;
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    .stApp [data-testid="stHorizontalBlock"] > [data-testid="stColumn"],
+    .stApp [data-testid="stHorizontalBlock"] > [data-testid="column"] {
+        flex: 0 0 auto !important;
+        width: 100% !important;
         max-width: 100% !important;
-        padding: 0.8rem 0.9rem 2rem !important;
+        min-width: 0 !important;
+        margin: 0 !important;
+    }
+
+    .stApp [data-testid="stVerticalBlock"],
+    .stApp [data-testid="stElementContainer"],
+    .stApp [data-testid="stMarkdownContainer"] {
+        max-width: 100%;
+        min-width: 0 !important;
+    }
+
+    .block-container,
+    [data-testid="stMainBlockContainer"] {
+        max-width: 100% !important;
+        padding: 0.8rem 1rem 2rem !important;
+    }
+
+    h1, h2, h3 {
+        overflow-wrap: anywhere;
     }
 
     .pace-brand {
+        padding: 0 0 10px !important;
         gap: 8px !important;
-        padding: 3px 0 8px !important;
     }
 
     .pace-brand-name {
         font-size: 22px !important;
-        letter-spacing: -0.045em !important;
+        letter-spacing: -.04em !important;
     }
 
     .pace-brand-logo {
-        width: 32px !important;
-        height: 32px !important;
-        font-size: 18px !important;
+        width: 34px !important;
+        height: 34px !important;
         margin-right: 7px !important;
+        font-size: 19px !important;
     }
 
     .pace-brand-right {
@@ -105,12 +147,13 @@ def apply_mobile_styles():
     }
 
     .pace-hero-wrap {
-        padding: 15px 0 14px !important;
+        padding: 15px 0 12px !important;
     }
 
     .pace-eyebrow {
-        font-size: 9px !important;
-        letter-spacing: 0.13em !important;
+        font-size: 10px !important;
+        letter-spacing: .11em !important;
+        line-height: 1.5;
     }
 
     .pace-eyebrow:before {
@@ -118,223 +161,264 @@ def apply_mobile_styles():
     }
 
     .pace-title {
-        font-size: clamp(2.35rem, 10.3vw, 3.7rem) !important;
+        font-size: clamp(2.25rem, 10.5vw, 3.65rem) !important;
         line-height: 1.04 !important;
-        letter-spacing: -0.062em !important;
-        margin: 15px 0 17px !important;
+        letter-spacing: -.055em !important;
+        margin: 14px 0 18px !important;
+        overflow-wrap: normal !important;
+        word-break: normal !important;
     }
 
     .pace-lede {
+        font-size: 15px !important;
+        line-height: 1.55 !important;
         max-width: 100% !important;
-        font-size: 0.95rem !important;
-        line-height: 1.58 !important;
-        margin: 0 0 16px !important;
+        margin: 0 0 13px !important;
     }
 
     .pace-micro-row {
-        gap: 9px 15px !important;
-        margin: 15px 0 6px !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 9px 12px !important;
+        margin: 13px 0 5px !important;
     }
 
     .pace-micro-row span {
         font-size: 10px !important;
-        letter-spacing: 0.025em;
     }
 
     .pace-viz {
-        min-height: 300px !important;
+        min-height: 0 !important;
         border-radius: 18px !important;
-        margin-top: 7px;
+        padding-bottom: 32px;
+        margin-top: 4px;
     }
 
     .pace-viz img {
-        height: 280px !important;
-        max-width: 100%;
-        object-fit: contain;
+        height: 270px !important;
+        object-fit: contain !important;
+        max-width: 100% !important;
     }
 
     .pace-viz-head {
-        top: 14px !important;
+        top: 15px !important;
         left: 15px !important;
         right: 15px !important;
         font-size: 9px !important;
-        letter-spacing: 0.06em !important;
+        letter-spacing: .075em !important;
     }
 
-    .pace-viz-head span:last-child {
-        display: none;
+    .pace-viz-head span:last-child,
+    .pace-viz-foot span:last-child {
+        display: none !important;
     }
 
     .pace-viz-foot {
-        left: 14px !important;
-        right: 14px !important;
         bottom: 12px !important;
+        left: 15px !important;
+        right: 15px !important;
         font-size: 9px !important;
-        letter-spacing: 0.05em !important;
-    }
-
-    .pace-viz-foot span:last-child {
-        display: none;
+        letter-spacing: .04em !important;
     }
 
     .pace-user-photo {
-        max-width: min(70vw, 240px) !important;
+        max-width: min(68vw, 230px) !important;
+        margin-top: 35px !important;
     }
 
     .pace-strip {
         display: flex !important;
         flex-direction: column !important;
-        gap: 7px !important;
-        padding: 12px 2px !important;
+        align-items: start !important;
+        gap: 8px !important;
+        padding: 13px 2px !important;
         font-size: 10px !important;
     }
 
     .pace-section-top {
-        padding: 17px 0 10px !important;
         gap: 8px !important;
+        padding: 18px 0 12px !important;
+    }
+
+    .pace-section-label {
+        font-size: 10px !important;
+        letter-spacing: .13em !important;
     }
 
     .pace-section-title {
-        font-size: clamp(1.55rem, 7vw, 2.2rem) !important;
-        line-height: 1.17 !important;
+        font-size: clamp(1.6rem, 7vw, 2.3rem) !important;
+        line-height: 1.14 !important;
     }
 
     .pace-section-sub {
         font-size: 13px !important;
-        line-height: 1.52 !important;
+        line-height: 1.55 !important;
+        max-width: 100% !important;
     }
 
-    .pace-tile {
+    .pace-tile,
+    .pace-story-card {
         min-height: 0 !important;
+        height: auto !important;
         padding: 20px !important;
-        border-radius: 16px !important;
-        margin-bottom: 0 !important;
+        border-radius: 15px !important;
+        margin: 0 0 3px !important;
     }
 
     .pace-tile-title {
-        margin: 14px 0 6px !important;
-        font-size: 21px !important;
+        font-size: 22px !important;
+        margin: 12px 0 7px !important;
     }
 
     .pace-tile-body {
-        max-width: 100% !important;
         font-size: 13px !important;
+        line-height: 1.55 !important;
+        max-width: 100% !important;
+    }
+
+    .pace-banner {
+        padding: 22px 18px !important;
+        border-radius: 17px !important;
+        margin: 8px 0 16px !important;
+    }
+
+    .pace-banner h1 {
+        font-size: clamp(2rem, 8.5vw, 2.75rem) !important;
+        line-height: 1.08 !important;
+    }
+
+    .pace-banner p {
+        font-size: 14px !important;
+        line-height: 1.5 !important;
     }
 
     .pace-band {
-        padding: 22px 18px !important;
+        padding: 20px !important;
         border-radius: 16px !important;
     }
 
     .pace-band h3 {
         font-size: 24px !important;
-        line-height: 1.17 !important;
-    }
-
-    .pace-banner {
-        padding: 23px 18px !important;
-        border-radius: 16px !important;
-        margin: 10px 0 18px !important;
-    }
-
-    .pace-banner h1 {
-        font-size: clamp(1.9rem, 8vw, 2.7rem) !important;
-        line-height: 1.11 !important;
-    }
-
-    .pace-banner p {
-        font-size: 14px !important;
-        line-height: 1.55 !important;
+        line-height: 1.2 !important;
     }
 
     .pace-story-quote {
-        padding: 19px 18px !important;
-        font-size: 20px !important;
-        line-height: 1.35 !important;
-    }
-
-    .pace-story-card {
-        min-height: 0 !important;
         padding: 19px !important;
+        font-size: 21px !important;
+        line-height: 1.35 !important;
     }
 
     .pace-story-card h3 {
         font-size: 21px !important;
-        margin: 11px 0 7px !important;
+        margin: 12px 0 8px !important;
     }
 
     .pace-footer {
-        margin-top: 26px !important;
-        gap: 7px !important;
+        flex-direction: column !important;
+        gap: 6px !important;
+        margin-top: 24px !important;
+        padding: 15px 0 !important;
     }
 
     .pace-footer span {
-        font-size: 9px !important;
+        font-size: 10px !important;
     }
 
-    /* Keep the three Motion Lab tabs accessible by horizontal swipe. */
+    /* Scrolling tabs are more usable than three squeezed labels. */
+    .stTabs {
+        max-width: 100%;
+        min-width: 0;
+    }
+
     .stTabs [data-baseweb="tab-list"] {
         display: flex !important;
+        flex-direction: row !important;
         flex-wrap: nowrap !important;
-        gap: 5px !important;
         overflow-x: auto !important;
-        max-width: 100%;
+        overflow-y: hidden !important;
+        width: 100% !important;
+        max-width: 100% !important;
         -webkit-overflow-scrolling: touch;
         scrollbar-width: thin;
+        gap: 5px !important;
         padding: 6px !important;
     }
 
     .stTabs [data-baseweb="tab"] {
         flex: 0 0 auto !important;
+        min-width: max-content !important;
         white-space: nowrap !important;
-        min-height: 44px !important;
-        padding: 9px 12px !important;
         font-size: 12px !important;
+        min-height: 44px !important;
+        padding: 8px 11px !important;
     }
 
     [data-testid="stMetric"] {
-        padding: 12px 14px !important;
+        padding: 13px 16px !important;
+        min-width: 0 !important;
         border-radius: 13px !important;
     }
 
     [data-testid="stMetricValue"] {
-        font-size: 1.5rem !important;
+        font-size: 1.55rem !important;
+    }
+
+    [data-testid="stFileUploader"] {
+        max-width: 100%;
+    }
+
+    [data-testid="stFileUploader"] section {
+        padding: 10px !important;
+    }
+
+    [data-testid="stSlider"] {
+        max-width: 100%;
     }
 
     div.stButton > button,
     div.stDownloadButton > button {
-        min-height: 44px !important;
-        white-space: normal !important;
+        min-height: 46px !important;
         line-height: 1.25 !important;
+        white-space: normal !important;
+        border-radius: 12px !important;
+        touch-action: manipulation;
     }
 
-    [data-testid="stDataFrame"],
-    [data-testid="stVegaLiteChart"] {
+    div.stButton,
+    div.stDownloadButton {
+        width: 100% !important;
+    }
+
+    div.stButton > button,
+    div.stDownloadButton > button {
+        width: 100% !important;
+    }
+
+    .stApp [data-testid="stDataFrame"],
+    .stApp [data-testid="stVegaLiteChart"] {
         max-width: 100% !important;
+        overflow-x: auto !important;
     }
 }
 
-/* Small phones, including a 320px viewport. */
-@media (max-width: 380px) {
-    .block-container {
-        padding-left: 0.75rem !important;
-        padding-right: 0.75rem !important;
+/* Extremely small phones. */
+@media (max-width: 370px) {
+    .block-container,
+    [data-testid="stMainBlockContainer"] {
+        padding-left: .75rem !important;
+        padding-right: .75rem !important;
     }
 
     .pace-title {
-        font-size: clamp(2.12rem, 10vw, 2.5rem) !important;
-    }
-
-    .pace-viz {
-        min-height: 270px !important;
+        font-size: 2.05rem !important;
     }
 
     .pace-viz img {
-        height: 250px !important;
+        height: 240px !important;
     }
 
-    .pace-section-title {
-        font-size: 1.65rem !important;
+    .pace-user-photo {
+        max-width: 205px !important;
     }
 }
 
