@@ -5,7 +5,7 @@ import os
 import re
 import logging
 
-from groq import Groq
+from groq import Groq, NotFoundError
 from ollama import chat
 
 
@@ -316,32 +316,97 @@ Return only the requested JSON object.
     # variables. Never store the API key in the GitHub repository.
     groq_key = api_key or os.getenv("GROQ_API_KEY")
 
+    groq_error_note = None
+
     if groq_key:
+        client = Groq(
+            api_key=groq_key,
+            timeout=25.0,
+            max_retries=1,
+        )
+
+        # The default model may be disabled for a particular Groq
+        # project. Ask Groq which models this API key can access,
+        # then try supported general-purpose chat models in order.
+        preferred_models = [
+            os.getenv("GROQ_MODEL", "").strip(),
+            GROQ_MODEL,
+            "llama-3.1-8b-instant",
+            "openai/gpt-oss-20b",
+            "openai/gpt-oss-120b",
+        ]
+        preferred_models = list(dict.fromkeys(
+            model for model in preferred_models if model
+        ))
+
         try:
-            client = Groq(
-                api_key=groq_key,
-                timeout=25.0,
-                max_retries=1,
-            )
-            response = client.chat.completions.create(
-                model=os.getenv("GROQ_MODEL", GROQ_MODEL),
-                messages=messages,
-                response_format={"type": "json_object"},
-                temperature=0.1,
-                max_tokens=1600,
-            )
-            report = parse_report(
-                response.choices[0].message.content
-            )
-            ai_source = "Groq"
+            available = {
+                model.id for model in client.models.list().data
+            }
+            candidates = [
+                model for model in preferred_models
+                if model in available
+            ]
+
+            if not candidates:
+                groq_error_note = (
+                    "Groq did not list a supported coaching model "
+                    "for this API key. Check model permissions in "
+                    "Groq Console."
+                )
 
         except Exception as error:
-            # Keep the report functional if the cloud API is
-            # unavailable, rate-limited or misconfigured.
+            # Model discovery can fail independently of chat.
+            # Still try the documented model IDs below.
             logger.warning(
-                "Groq coaching unavailable (%s); using rule-based feedback.",
+                "Groq model discovery unavailable (%s, HTTP %s).",
                 type(error).__name__,
+                getattr(error, "status_code", "unknown"),
             )
+            candidates = preferred_models
+
+        for model_id in candidates:
+            try:
+                response = client.chat.completions.create(
+                    model=model_id,
+                    messages=messages,
+                    response_format={"type": "json_object"},
+                    temperature=0.1,
+                    max_tokens=1600,
+                )
+                report = parse_report(
+                    response.choices[0].message.content
+                )
+                ai_source = "Groq"
+                groq_error_note = None
+                break
+
+            except NotFoundError:
+                # The model can disappear or be restricted between
+                # model discovery and the completion request.
+                logger.warning(
+                    "Groq model %s returned HTTP 404; trying next model.",
+                    model_id,
+                )
+                groq_error_note = (
+                    "Groq returned HTTP 404 for the selected model. "
+                    "Check model permissions and any GROQ_MODEL "
+                    "override in Streamlit Secrets."
+                )
+
+            except Exception as error:
+                logger.warning(
+                    "Groq coaching failed for model %s (%s, HTTP %s).",
+                    model_id,
+                    type(error).__name__,
+                    getattr(error, "status_code", "unknown"),
+                )
+                groq_error_note = (
+                    "Groq AI could not generate this report. "
+                    "Check the Streamlit logs and Groq Console "
+                    "model permissions or usage limits."
+                )
+                break
 
     else:
         # Local development can still use the installed Ollama model.
@@ -449,6 +514,12 @@ Return only the requested JSON object.
             else "# PaceIQ — Technique Report (Rule-Based)"
         )
     ]
+
+    if not ai_source and groq_key and groq_error_note:
+        output.append(
+            f"> **Groq AI unavailable:** {groq_error_note} "
+            "The report below uses measured-data rules instead."
+        )
 
     list_sections = {
         "areas_to_investigate",
