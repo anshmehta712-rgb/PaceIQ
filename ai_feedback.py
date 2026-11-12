@@ -283,50 +283,53 @@ Return only the requested JSON object.
     # 6. GENERATE LOCAL AI RESPONSE
     # ------------------------------------------
 
-    response = chat(
-        model=MODEL,
-        messages=[
-            {
-                "role": "system",
-                "content": instructions,
-            },
-            {
-                "role": "user",
-                "content": json.dumps(
-                    data,
-                    allow_nan=False
-                ),
-            },
-        ],
-        format="json",
-        think=False,
-        options={
-            "temperature": 0.1,
-            "num_predict": 1800,
-        },
-    )
-
-    raw = (
-        response.message.content or ""
-    ).strip()
-
-    if not raw:
-        raise RuntimeError(
-            "Ollama returned an empty response."
-        )
+    # Ollama is available during local development but not on
+    # Streamlit Community Cloud. Fall back to a report generated
+    # directly from the measured angles when it cannot be reached.
+    report = {}
+    used_local_ai = False
 
     try:
-        report = json.loads(raw)
-
-    except json.JSONDecodeError as error:
-        raise RuntimeError(
-            "Ollama returned invalid report data."
-        ) from error
-
-    if not isinstance(report, dict):
-        raise RuntimeError(
-            "Ollama returned an invalid report structure."
+        response = chat(
+            model=MODEL,
+            messages=[
+                {
+                    "role": "system",
+                    "content": instructions,
+                },
+                {
+                    "role": "user",
+                    "content": json.dumps(
+                        data,
+                        allow_nan=False,
+                    ),
+                },
+            ],
+            format="json",
+            think=False,
+            options={
+                "temperature": 0.1,
+                "num_predict": 1800,
+            },
         )
+
+        raw = (response.message.content or "").strip()
+
+        if not raw:
+            raise RuntimeError("Ollama returned an empty response.")
+
+        parsed = json.loads(raw)
+
+        if not isinstance(parsed, dict):
+            raise RuntimeError("Ollama returned an invalid report structure.")
+
+        report = parsed
+        used_local_ai = True
+
+    except Exception:
+        # A missing server, missing model, timeout, or invalid model
+        # response must not prevent a measurement-based report.
+        report = {}
 
     # ------------------------------------------
     # 7. FALLBACK CONTENT
@@ -406,7 +409,11 @@ Return only the requested JSON object.
     # ------------------------------------------
 
     output = [
-        "# PaceIQ — Technique Report"
+        (
+            "# PaceIQ — AI Technique Report"
+            if used_local_ai
+            else "# PaceIQ — Technique Report (Rule-Based)"
+        )
     ]
 
     list_sections = {
