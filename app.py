@@ -230,12 +230,12 @@ def home():
             '<div class="pace-lede">'
             'Understand your fast-bowling action through '
             'computer vision, biomechanical measurements '
-            'and local AI-assisted coaching.'
+            'and coaching feedback from movement data.'
             '</div>'
             '<div class="pace-micro-row">'
             '<span><strong>01</strong> MOTION TRACKING</span>'
             '<span><strong>02</strong> PHASE ANALYSIS</span>'
-            '<span><strong>03</strong> AI COACHING</span>'
+            '<span><strong>03</strong> COACHING FEEDBACK</span>'
             '</div>'
             '</div>',
             unsafe_allow_html=True,
@@ -260,7 +260,7 @@ def home():
     st.markdown(
         '<div class="pace-strip">'
         '<span><b>PACEIQ</b> / BUILT FOR FAST BOWLERS</span>'
-        '<span>COMPUTER VISION + LOCAL AI</span>'
+        '<span>COMPUTER VISION + BIOMECHANICS</span>'
         '<span>IB MYP PERSONAL PROJECT</span>'
         '</div>',
         unsafe_allow_html=True,
@@ -296,10 +296,10 @@ def home():
             </article>
             <article class="pace-tile">
                 <div class="pace-tile-no">03 / UNDERSTAND</div>
-                <div class="pace-tile-title">AI Bowling Coach</div>
+                <div class="pace-tile-title">Technique Feedback</div>
                 <div class="pace-tile-body">
-                    Receive structured observations and suggested
-                    training questions using local AI.
+                    Receive structured movement observations, with
+                    local AI support when available.
                 </div>
             </article>
         </div>
@@ -341,7 +341,7 @@ def home():
             <div class="pace-process-step">
                 <h3>03 — Reflect</h3>
                 <p>Review the measurements and receive
-                AI-assisted coaching observations.</p>
+                coaching observations based on movement data.</p>
             </div>
         </div>
         """,
@@ -450,7 +450,7 @@ def motion_lab():
         [
             "01 / Bowling Phases",
             "02 / Tracking & Measurements",
-            "03 / AI Coach",
+            "03 / Coaching Feedback",
         ]
     )
 
@@ -968,9 +968,10 @@ def motion_lab():
 
         section_title(
             "PACEIQ INTELLIGENCE",
-            "Your AI bowling coach.",
-            "Get evidence-based observations from "
-            "the estimated movement data.",
+            "Your bowling technique report.",
+            "Review observations from estimated movement data. "
+            "Local AI is used when available; otherwise "
+            "PaceIQ provides rule-based feedback.",
         )
 
         current_settings = (
@@ -1005,7 +1006,7 @@ def motion_lab():
                 "Analyse your action first.",
                 "Go to Tracking & Measurements and "
                 "complete video tracking before "
-                "generating AI feedback.",
+                "generating coaching feedback.",
             )
 
         else:
@@ -1040,7 +1041,7 @@ def motion_lab():
             )
 
             if st.button(
-                "Generate AI Coaching Feedback",
+                "Generate Coaching Feedback",
                 type="primary",
                 key="generate_coaching",
                 width="stretch",
@@ -1086,7 +1087,7 @@ def motion_lab():
                         ] = current_settings
 
                     with st.spinner(
-                        "PaceIQ AI is preparing your report..."
+                        "PaceIQ is preparing your report..."
                     ):
 
                         feedback = generate_ai_feedback(
@@ -1111,12 +1112,12 @@ def motion_lab():
                     ] = input_settings
 
                     st.success(
-                        "AI coaching report generated."
+                        "Coaching report generated."
                     )
 
                 except Exception as error:
                     st.error(
-                        f"AI coaching failed: {error}"
+                        f"Coaching feedback failed: {error}"
                     )
 
             feedback = st.session_state.get(
@@ -1150,7 +1151,7 @@ def motion_lab():
                     st.markdown(feedback)
 
             st.caption(
-                "AI feedback is based on estimated 2D "
+                "Feedback is based on estimated 2D "
                 "pose measurements, not direct video "
                 "understanding. It cannot establish "
                 "bowling-action legality, injury risk "
