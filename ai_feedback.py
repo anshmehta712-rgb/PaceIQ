@@ -1,12 +1,17 @@
 
 import json
 import math
+import os
 import re
+import logging
 
+from groq import Groq
 from ollama import chat
 
 
 MODEL = "qwen3:4b"
+GROQ_MODEL = "llama-3.3-70b-versatile"
+logger = logging.getLogger(__name__)
 
 HEADINGS = {
     "overall_assessment": "Overall Assessment",
@@ -67,8 +72,8 @@ def generate_ai_feedback(
     phase_times=None,
 ):
     """
-    Generate structured cricket bowling feedback
-    using the locally installed Ollama model.
+    Generate cricket bowling feedback using hosted Groq AI,
+    local Ollama, or a transparent rule-based fallback.
     """
 
     if not records:
@@ -183,7 +188,7 @@ def generate_ai_feedback(
             }
 
     # ------------------------------------------
-    # 4. PREPARE DATA FOR LOCAL AI
+    # 4. PREPARE MEASUREMENT DATA FOR AI
     # ------------------------------------------
 
     step = max(
@@ -280,56 +285,85 @@ Return only the requested JSON object.
 """
 
     # ------------------------------------------
-    # 6. GENERATE LOCAL AI RESPONSE
+    # 6. GENERATE CLOUD OR LOCAL AI RESPONSE
     # ------------------------------------------
 
-    # Ollama is available during local development but not on
-    # Streamlit Community Cloud. Fall back to a report generated
-    # directly from the measured angles when it cannot be reached.
-    report = {}
-    used_local_ai = False
+    # Only numerical measurements, phase timestamps and optional
+    # bowler notes are sent to the model; the video stays in PaceIQ.
+    messages = [
+        {"role": "system", "content": instructions},
+        {
+            "role": "user",
+            "content": json.dumps(data, allow_nan=False),
+        },
+    ]
 
-    try:
-        response = chat(
-            model=MODEL,
-            messages=[
-                {
-                    "role": "system",
-                    "content": instructions,
-                },
-                {
-                    "role": "user",
-                    "content": json.dumps(
-                        data,
-                        allow_nan=False,
-                    ),
-                },
-            ],
-            format="json",
-            think=False,
-            options={
-                "temperature": 0.1,
-                "num_predict": 1800,
-            },
-        )
-
-        raw = (response.message.content or "").strip()
-
-        if not raw:
-            raise RuntimeError("Ollama returned an empty response.")
-
-        parsed = json.loads(raw)
-
+    def parse_report(content):
+        parsed = json.loads((content or "").strip())
         if not isinstance(parsed, dict):
-            raise RuntimeError("Ollama returned an invalid report structure.")
+            raise ValueError("AI response is not a JSON object.")
+        if not any(
+            isinstance(parsed.get(key), str) and parsed[key].strip()
+            for key in HEADINGS
+        ):
+            raise ValueError("AI response has no usable report sections.")
+        return parsed
 
-        report = parsed
-        used_local_ai = True
+    report = {}
+    ai_source = None
 
-    except Exception:
-        # A missing server, missing model, timeout, or invalid model
-        # response must not prevent a measurement-based report.
-        report = {}
+    # Root-level Streamlit secrets are also exposed as environment
+    # variables. Never store the API key in the GitHub repository.
+    groq_key = api_key or os.getenv("GROQ_API_KEY")
+
+    if groq_key:
+        try:
+            client = Groq(
+                api_key=groq_key,
+                timeout=25.0,
+                max_retries=1,
+            )
+            response = client.chat.completions.create(
+                model=os.getenv("GROQ_MODEL", GROQ_MODEL),
+                messages=messages,
+                response_format={"type": "json_object"},
+                temperature=0.1,
+                max_tokens=1600,
+            )
+            report = parse_report(
+                response.choices[0].message.content
+            )
+            ai_source = "Groq"
+
+        except Exception as error:
+            # Keep the report functional if the cloud API is
+            # unavailable, rate-limited or misconfigured.
+            logger.warning(
+                "Groq coaching unavailable (%s); using rule-based feedback.",
+                type(error).__name__,
+            )
+
+    else:
+        # Local development can still use the installed Ollama model.
+        try:
+            response = chat(
+                model=MODEL,
+                messages=messages,
+                format="json",
+                think=False,
+                options={
+                    "temperature": 0.1,
+                    "num_predict": 1800,
+                },
+            )
+            report = parse_report(response.message.content)
+            ai_source = "Ollama"
+
+        except Exception as error:
+            logger.info(
+                "Local Ollama unavailable (%s); using rule-based feedback.",
+                type(error).__name__,
+            )
 
     # ------------------------------------------
     # 7. FALLBACK CONTENT
@@ -410,8 +444,8 @@ Return only the requested JSON object.
 
     output = [
         (
-            "# PaceIQ — AI Technique Report"
-            if used_local_ai
+            f"# PaceIQ — AI Technique Report ({ai_source})"
+            if ai_source
             else "# PaceIQ — Technique Report (Rule-Based)"
         )
     ]
