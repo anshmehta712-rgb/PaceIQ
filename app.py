@@ -299,7 +299,7 @@ def home():
                 <div class="pace-tile-title">Technique Feedback</div>
                 <div class="pace-tile-body">
                     Receive structured movement observations, with
-                    local AI support when available.
+                    AI-assisted coaching when configured.
                 </div>
             </article>
         </div>
@@ -970,8 +970,8 @@ def motion_lab():
             "PACEIQ INTELLIGENCE",
             "Your bowling technique report.",
             "Review observations from estimated movement data. "
-            "Local AI is used when available; otherwise "
-            "PaceIQ provides rule-based feedback.",
+            "Groq AI is used when configured; otherwise "
+            "PaceIQ provides local or rule-based feedback.",
         )
 
         current_settings = (
@@ -1153,9 +1153,11 @@ def motion_lab():
             st.caption(
                 "Feedback is based on estimated 2D "
                 "pose measurements, not direct video "
-                "understanding. It cannot establish "
-                "bowling-action legality, injury risk "
-                "or the cause of low pace."
+                "understanding. When Groq AI is enabled, "
+                "measurements and optional notes are sent "
+                "to Groq, but the uploaded video is not. "
+                "This report cannot establish bowling-action "
+                "legality, injury risk or the cause of low pace."
             )
 
 

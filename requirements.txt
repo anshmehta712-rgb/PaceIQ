@@ -6,3 +6,4 @@ mediapipe==1.2.2
 ollama==0.6.3
 imageio-ffmpeg==0.8.1
 protobuf==7.36.2
+groq>=0.30.0
