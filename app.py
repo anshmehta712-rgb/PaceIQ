@@ -773,7 +773,7 @@ def motion_lab():
             section_title(
                 "BIOMECHANICS",
                 "Joint angle measurements.",
-                "Measure estimated front knee, "
+                "Measure estimated front knee, back knee, "
                 "bowling elbow and trunk angles.",
             )
 
@@ -828,6 +828,8 @@ def motion_lab():
             if records:
 
                 df = pd.DataFrame(records)
+                for joint in ("Knee", "Back Knee", "Elbow", "Trunk"):
+                    df[joint] = pd.to_numeric(df[joint], errors="coerce")
 
                 st.markdown("### Angle trends")
 
@@ -889,7 +891,7 @@ def motion_lab():
                         if measurement is None:
 
                             st.warning(
-                                "No nearby measurement available."
+                                "Selected frame unavailable. Check clip and re-measure."
                             )
 
                             phase_rows.append({
@@ -958,7 +960,7 @@ def motion_lab():
                     )
 
                     st.dataframe(
-                        phase_df.astype(object).where(phase_df.notna(), "Unavailable"),
+                        phase_df.fillna("Unavailable").astype(str),
                         width="stretch",
                         hide_index=True,
                     )
