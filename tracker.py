@@ -164,7 +164,7 @@ def collect_points(landmarks, width, height):
         joint = landmarks[index]
 
         # Ignore joints that are not clearly visible
-        if joint.visibility < 0.5:
+        if joint.visibility is None or joint.visibility < 0.7:
             continue
 
         if not (
@@ -253,6 +253,7 @@ def draw_pose_and_angles(
     )
 
     knee_angle = None
+    back_knee_angle = None
     elbow_angle = None
     trunk_angle = None
 
@@ -279,6 +280,12 @@ def draw_pose_and_angles(
             GREEN,
             -1
         )
+
+    # BACK KNEE (opposite of the selected front leg)
+    back_leg = LEFT if front_leg.lower() == "right" else RIGHT
+    rear = [back_leg[key] for key in ("hip", "knee", "ankle")]
+    if all(i in points for i in rear):
+        back_knee_angle = calculate_angle(*(points[i] for i in rear))
 
     # BOWLING ELBOW
     shoulder = arm["shoulder"]
@@ -390,6 +397,7 @@ def draw_pose_and_angles(
 
     measurements = {
         "knee": knee_angle,
+        "back_knee": back_knee_angle,
         "elbow": elbow_angle,
         "trunk": trunk_angle
     }

@@ -2,6 +2,7 @@
 import os
 import tempfile
 import cv2
+from measurement_quality import validate_phase
 
 
 def get_preview_frame(video_bytes, seconds):
@@ -58,7 +59,7 @@ def get_preview_frame(video_bytes, seconds):
 
 
 
-def get_phase_measurements(records, selected_time, tolerance=0.15):
+def get_phase_measurements(records, selected_time, tolerance=0.002, phase=None):
     """
     Find measured knee, elbow and trunk angles
     nearest to a selected bowling phase.
@@ -87,10 +88,7 @@ def get_phase_measurements(records, selected_time, tolerance=0.15):
     if abs(measured_time - selected_time) > tolerance:
         return None
 
-    return {
-        "Time": measured_time,
-        "Knee": nearest.get("Knee"),
-        "Elbow": nearest.get("Elbow"),
-        "Trunk": nearest.get("Trunk"),
-    }
+    result = validate_phase(nearest, phase)
+    result["Time"] = measured_time
+    return result
 

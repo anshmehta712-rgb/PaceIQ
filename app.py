@@ -8,6 +8,7 @@ import streamlit as st
 from tracker import process_video, video_information
 from feedback import analyse_movement
 from phase_tools import get_preview_frame, get_phase_measurements
+from measurement_quality import reference_text
 from ai_feedback import generate_ai_feedback
 from mobile import apply_mobile_styles
 
@@ -110,12 +111,13 @@ def display_angle(value):
         return "Unavailable"
 
 
-def measure_video(video_bytes, start_time, front_leg, bowling_arm):
+def measure_video(video_bytes, start_time, front_leg, bowling_arm, saved_phases):
     records = analyse_movement(
         video_bytes,
         start_time,
         front_leg.lower(),
         bowling_arm.lower(),
+        phase_times={key: item["time"] for key, item in saved_phases.items()},
     )
 
     if not records:
@@ -792,6 +794,7 @@ def motion_lab():
                             start_time,
                             front_leg,
                             bowling_arm,
+                            saved_phases,
                         )
 
                     st.session_state[
@@ -800,7 +803,7 @@ def motion_lab():
 
                     st.session_state[
                         "measurement_settings"
-                    ] = settings
+                    ] = (settings, phase_signature(saved_phases))
 
                     st.success(
                         "Joint measurements complete."
@@ -818,7 +821,7 @@ def motion_lab():
             if (
                 st.session_state.get(
                     "measurement_settings"
-                ) != settings
+                ) != (settings, phase_signature(saved_phases))
             ):
                 records = None
 
@@ -830,13 +833,13 @@ def motion_lab():
 
                 st.line_chart(
                     df.set_index("Time (s)")[
-                        ["Knee", "Elbow", "Trunk"]
+                        ["Knee", "Back Knee", "Elbow", "Trunk"]
                     ]
                 )
 
                 st.download_button(
                     "Download Angle Data (CSV)",
-                    data=df.to_csv(index=False),
+                    data=df.to_csv(index=False, na_rep="Unavailable"),
                     file_name="PaceIQ_Angles.csv",
                     mime="text/csv",
                 )
@@ -847,7 +850,7 @@ def motion_lab():
                     "PHASE COMPARISON",
                     "Three moments. Three measurements.",
                     "Measurements are matched to the "
-                    "nearest available sample.",
+                    "exact selected video frame.",
                 )
 
                 phase_rows = []
@@ -877,11 +880,11 @@ def motion_lab():
                         measurement = get_phase_measurements(
                             records,
                             selected_time,
+                            phase=phase,
                         )
 
-                        st.caption(
-                            f"Selected: {selected_time:.3f}s"
-                        )
+                        st.caption(f"Selected: {selected_time:.3f}s")
+                        st.caption(reference_text(phase))
 
                         if measurement is None:
 
@@ -894,8 +897,11 @@ def motion_lab():
                                 "Selected Time": selected_time,
                                 "Measured Time": None,
                                 "Knee": None,
+                                "Back Knee": None,
                                 "Elbow": None,
                                 "Trunk": None,
+                                "Reference": reference_text(phase),
+                                "Quality": "Unavailable: selected frame not measured",
                             })
 
                             continue
@@ -911,6 +917,13 @@ def motion_lab():
                                 measurement["Knee"]
                             ),
                         )
+
+                        st.metric("Back Knee", display_angle(measurement["Back Knee"]))
+
+                        for joint in ("Knee", "Back Knee", "Elbow", "Trunk"):
+                            quality = measurement[joint + " quality"]
+                            if quality.startswith(("Unavailable", "Outside")):
+                                st.caption(f"{joint}: {quality}")
 
                         st.metric(
                             "Bowling Elbow",
@@ -931,8 +944,11 @@ def motion_lab():
                             "Selected Time": selected_time,
                             "Measured Time": measurement["Time"],
                             "Knee": measurement["Knee"],
+                            "Back Knee": measurement["Back Knee"],
                             "Elbow": measurement["Elbow"],
                             "Trunk": measurement["Trunk"],
+                            "Reference": reference_text(phase),
+                            "Quality": "; ".join(f"{j}: {measurement[j + ' quality']}" for j in ("Knee", "Back Knee", "Elbow", "Trunk")),
                         })
 
                 if phase_rows:
@@ -942,22 +958,27 @@ def motion_lab():
                     )
 
                     st.dataframe(
-                        phase_df,
+                        phase_df.astype(object).where(phase_df.notna(), "Unavailable"),
                         width="stretch",
                         hide_index=True,
                     )
 
                     st.download_button(
                         "Download Phase Comparison",
-                        data=phase_df.to_csv(index=False),
+                        data=phase_df.to_csv(index=False, na_rep="Unavailable"),
                         file_name="PaceIQ_Phases.csv",
                         mime="text/csv",
                     )
 
                 st.caption(
                     "Angles are estimated from 2D video. "
-                    "Measurements are matched within "
-                    "0.15 seconds of the selected phase."
+                    "Selected frames are explicitly sampled. A 0.7 landmark "
+                    "visibility threshold and a provisional 90° loaded-knee "
+                    "quality screen can exclude uncertain or extreme values. "
+                    "Review unavailable angles manually; genuine extremes may be excluded. "
+                    "Reference ranges are observed participant means, not ideal targets "
+                    "or anatomical limits (Wickington & Linthorne, 2017, "
+                    "doi:10.3390/sports5010018). Re-measure after changing a phase."
                 )
 
     # ========================================================
@@ -1061,7 +1082,7 @@ def motion_lab():
                     if (
                         st.session_state.get(
                             "measurement_settings"
-                        ) != current_settings
+                        ) != (current_settings, phase_signature(saved_phases))
                     ):
                         records = None
 
@@ -1076,6 +1097,7 @@ def motion_lab():
                                 start_time,
                                 front_leg,
                                 bowling_arm,
+                                saved_phases,
                             )
 
                         st.session_state[
@@ -1084,7 +1106,7 @@ def motion_lab():
 
                         st.session_state[
                             "measurement_settings"
-                        ] = current_settings
+                        ] = (current_settings, phase_signature(saved_phases))
 
                     with st.spinner(
                         "PaceIQ is preparing your report..."

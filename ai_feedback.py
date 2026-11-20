@@ -7,6 +7,8 @@ import logging
 
 from groq import Groq, NotFoundError
 from ollama import chat
+from phase_tools import get_phase_measurements
+from measurement_quality import reference_text
 
 
 MODEL = "qwen3:4b"
@@ -96,6 +98,7 @@ def generate_ai_feedback(
         measurements.append({
             "time": time,
             "knee": valid_number(row.get("Knee")),
+            "back_knee": valid_number(row.get("Back Knee")),
             "elbow": valid_number(row.get("Elbow")),
             "trunk": valid_number(row.get("Trunk")),
         })
@@ -153,38 +156,19 @@ def generate_ai_feedback(
         if selected_time is None:
             continue
 
-        nearest = min(
-            measurements,
-            key=lambda row: abs(
-                row["time"] - selected_time
-            )
-        )
-
-        difference = abs(
-            nearest["time"] - selected_time
-        )
-
-        if difference <= 0.15:
-            phase_data[name] = {
-                "selected_time": round(
-                    selected_time, 2
-                ),
-                "measured_time": round(
-                    nearest["time"], 2
-                ),
-                "knee": nearest["knee"],
-                "elbow": nearest["elbow"],
-                "trunk": nearest["trunk"],
-            }
-
+        match = get_phase_measurements(records, selected_time, phase=name)
+        if match is None:
+            phase_data[name] = {"selected_time": selected_time, "status": "Unavailable"}
         else:
             phase_data[name] = {
-                "selected_time": round(
-                    selected_time, 2
-                ),
-                "status": (
-                    "No nearby measurement available"
-                ),
+                "selected_time": selected_time,
+                "measured_time": match["Time"],
+                "knee": match["Knee"],
+                "back_knee": match["Back Knee"],
+                "elbow": match["Elbow"],
+                "trunk": match["Trunk"],
+                "reference": reference_text(name),
+                "quality": {j: match[j + " quality"] for j in ("Knee", "Back Knee", "Elbow", "Trunk")},
             }
 
     # ------------------------------------------
@@ -265,6 +249,8 @@ IMPORTANT RULES:
 
 - Reference actual measured angles and times.
 - Never invent measurements.
+- Do not infer missing phase angles from other frames or coach based on unavailable readings.
+- Study ranges are descriptive participant means, not ideal standards or limits.
 - Never invent visual observations.
 - Do not infer arm extension from trunk lean.
 - Do not claim that angles prove strong leg drive.
