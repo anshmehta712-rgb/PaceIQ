@@ -6,6 +6,7 @@ import cv2
 import mediapipe as mp
 
 from tracker import MODEL, draw_pose_and_angles
+from measurement_quality import validate_phase
 
 
 def analyse_movement(
@@ -13,7 +14,8 @@ def analyse_movement(
     start_time,
     front_leg,
     bowling_arm,
-    clip_seconds=5
+    clip_seconds=5,
+    phase_times=None
 ):
     """
     Sample the bowling clip and record joint angles.
@@ -52,6 +54,15 @@ def analyse_movement(
             # Sample approximately five times per second
             step = max(1, round(fps / 5))
 
+            # Always include the exact selected phase frames in addition
+            # to the regular samples, without extending the selected clip.
+            selected_frames = {}
+            for phase, seconds in (phase_times or {}).items():
+                index = round(float(seconds) * fps)
+                if first <= index < last:
+                    selected_frames.setdefault(index, []).append(phase)
+            sample_frames = sorted(set(range(first, last, step)) | set(selected_frames))
+
             options = mp.tasks.vision.PoseLandmarkerOptions(
                 base_options=mp.tasks.BaseOptions(
                     model_asset_path=str(MODEL)
@@ -66,7 +77,7 @@ def analyse_movement(
                 options
             ) as detector:
 
-                for frame_number in range(first, last, step):
+                for frame_number in sample_frames:
 
                     video.set(
                         cv2.CAP_PROP_POS_FRAMES,
@@ -114,6 +125,7 @@ def analyse_movement(
                     row = {
                         "Time (s)": round(frame_number / fps, 3),
                         "Knee": None,
+                        "Back Knee": None,
                         "Elbow": None,
                         "Trunk": None
                     }
@@ -128,9 +140,12 @@ def analyse_movement(
                         )
 
                         row["Knee"] = measurements["knee"]
+                        row["Back Knee"] = measurements["back_knee"]
                         row["Elbow"] = measurements["elbow"]
                         row["Trunk"] = measurements["trunk"]
 
+                    for phase in selected_frames.get(frame_number, []):
+                        row = validate_phase(row, phase)
                     records.append(row)
 
             return records
